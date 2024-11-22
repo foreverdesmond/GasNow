@@ -1,0 +1,6 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "YourConnectionStringHere",
+    "RedisConnection": "YourRedisConnectionStringHere"
+  }
+}

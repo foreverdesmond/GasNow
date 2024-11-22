@@ -1,0 +1,9 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "YourConnectionStringHere",
+    "RedisConnection": "YourRedisConnectionStringHere"
+  },
+    "ApiSettings": {
+    "EtherscanApiKey": "YourApiKeyHere"
+  }
+}

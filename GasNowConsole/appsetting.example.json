@@ -3,7 +3,13 @@
     "DefaultConnection": "YourConnectionStringHere",
     "RedisConnection": "YourRedisConnectionStringHere"
   },
-    "ApiSettings": {
-    "EtherscanApiKey": "YourApiKeyHere"
+  "ApiUrls": {
+    "AlchemyHistoricalGas": "https://api.g.alchemy.com/prices/v1/docs-demo/tokens/historical",
+    "GasNow": "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=",
+    "PriceNow": "https://api.etherscan.io/api?module=stats&action=ethprice&apikey=",
+    "EtherscanApi": "https://api.etherscan.io/api"
+  },
+  "DatabaseSettings": {
+    "UseDatabase": false
   }
 }

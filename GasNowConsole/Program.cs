@@ -10,16 +10,19 @@ using NLog;
 using NLog.Extensions.Logging;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using DotNetEnv;
 
 namespace GasNow
 { 
     public class Program
     {
         private static readonly Logger Logger = LogManager.GetCurrentClassLogger();
-        public static IConfiguration Configuration { get; private set; }
+        public static IConfiguration _configuration { get; private set; }
 
         public static async Task Main(string[] args)
         {
+            Env.Load();
+
             var host = CreateHostBuilder(args).Build();
 
             using (var scope = host.Services.CreateScope())
@@ -28,17 +31,20 @@ namespace GasNow
 
                 try
                 {
-                    var context = services.GetRequiredService<GasNowDbContext>();
+                    //var context = services.GetRequiredService<GasNowDbContext>();
                     var redis = services.GetRequiredService<IConnectionMultiplexer>();
                     var businessFactory = services.GetRequiredService<IBusinessFactory>();
-                    var gasFeeBusiness = businessFactory.Create<GasFeeBusiness>(context, redis);
-                    var chainApiUrlBusiness = businessFactory.Create<ChainApiUrlBusiness>(context);
+                    //var gasFeeBusiness = businessFactory.Create<GasFeeBusiness>(context, redis);
+                    var gasFeeBusiness = businessFactory.Create<GasFeeBusiness>(redis,_configuration);
+                    //var chainApiUrlBusiness = businessFactory.Create<ChainApiUrlBusiness>(context);
 
-                    var priceBusiness = businessFactory.Create<PriceBussiness>(context, redis);
+                    //var priceBusiness = businessFactory.Create<PriceBussiness>(context, redis);
 
-                    var taskGasFee = StartFetchingGasFeesAsync(gasFeeBusiness,chainApiUrlBusiness);
+                    var priceBusiness = businessFactory.Create<PriceBussiness>(redis,_configuration);
 
-                    var taskPrice = StartFetchingPriceAsync(priceBusiness, chainApiUrlBusiness);
+                    var taskGasFee = StartFetchingGasFeesAsync(gasFeeBusiness);
+
+                    var taskPrice = StartFetchingPriceAsync(priceBusiness);
 
                     await Task.WhenAll(taskGasFee, taskPrice);
 
@@ -62,12 +68,12 @@ namespace GasNow
                 })
             .ConfigureServices((hostContext, services) =>
             {
-                Configuration = hostContext.Configuration;
+                _configuration = hostContext.Configuration;
 
-                var connectionString = Configuration.GetConnectionString("DefaultConnection");
+                var connectionString = _configuration.GetConnectionString("DefaultConnection");
                 services.AddDbContext<GasNowDbContext>(options =>
                     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
-                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(Configuration.GetConnectionString("RedisConnection")));
+                services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(_configuration.GetConnectionString("RedisConnection")));
 
                 services.AddScoped<ChainAPIUrlService>();
                 services.AddScoped<ChainService>();
@@ -80,65 +86,72 @@ namespace GasNow
                 services.AddControllers();
             });
            
-        public static async Task StartFetchingGasFeesAsync(GasFeeBusiness gasFeeBusiness, ChainApiUrlBusiness chainApiUrlBusiness)
+        public static async Task StartFetchingGasFeesAsync(GasFeeBusiness gasFeeBusiness)
         {
             using var httpClient = new HttpClient();
-            var apiUrl = chainApiUrlBusiness.GetApiUrlByName("GasNow");
 
-            var apiKey = Configuration["ApiSettings:EtherscanApiKey"];
+            var useDatabase = Convert.ToBoolean(_configuration["DatabaseSettings:UseDatabase"]);
 
-            apiUrl = apiUrl + apiKey;
-            if (!string.IsNullOrEmpty(apiUrl))
+            //var apiUrl = chainApiUrlBusiness.GetApiUrlByName("GasNow",useDatabase);
+
+            //var apiKey = _configuration["ApiUrls:EtherscanApiKey"];
+
+            //apiUrl = apiUrl + apiKey;
+
+            //if (!string.IsNullOrEmpty(apiUrl))
+            //{
+            while (true)
             {
-                while (true)
+                try
                 {
-                    try
-                    {
-                        await gasFeeBusiness.GetAndSaveGasFeesAsync(httpClient, apiUrl);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex, "An error occurred while fetching gas fees.");
-                    }
-
-                    await Task.Delay(6000);
+                    await gasFeeBusiness.GetAndSaveGasFeesAsync(useDatabase);
                 }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "An error occurred while fetching gas fees.");
+                }
+
+                await Task.Delay(120000);
             }
-            else
-            {
-                Logger.Error("Api Url is null. Please check api_url data in DB.");
-            }
+            //}
+            //else
+            //{
+            //    Logger.Error("Read ApiUrl Error. Plaease check conifg in DB or appsetting.");
+            //}
         }
 
-        public static async Task StartFetchingPriceAsync(PriceBussiness priceBussiness, ChainApiUrlBusiness chainApiUrlBusiness)
+        public static async Task StartFetchingPriceAsync(PriceBussiness priceBussiness)
         {
             using var httpClient = new HttpClient();
-            var apiUrl = chainApiUrlBusiness.GetApiUrlByName("PriceNow");
 
-            var apiKey = Configuration["ApiSettings:EtherscanApiKey"];
+            var useDatabase = Convert.ToBoolean(_configuration["DatabaseSettings:UseDatabase"]);
 
-            apiUrl = apiUrl + apiKey;
+            //var apiUrl = chainApiUrlBusiness.GetApiUrlByName("PriceNow",useDatabase);
 
-            if (!string.IsNullOrEmpty(apiUrl))
+            //var apiKey = _configuration["ApiUrls:EtherscanApiKey"];
+
+            //apiUrl = apiUrl + apiKey;
+
+            //if (!string.IsNullOrEmpty(apiUrl))
+            //{
+            while (true)
             {
-                while (true)
+                try
                 {
-                    try
-                    {
-                        await priceBussiness.GetPrice(httpClient, apiUrl);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.Error(ex, "An error occurred while fetching gas fees.");
-                    }
-
-                    await Task.Delay(12000);
+                    await priceBussiness.GetAndSavePriceAsync(_configuration, useDatabase);
                 }
+                catch (Exception ex)
+                {
+                    Logger.Error(ex, "An error occurred while fetching price.");
+                }
+
+                await Task.Delay(120000);
             }
-            else
-            {
-                Logger.Error("Api Url is null. Please check api_url data in DB.");
-            }
+            //}
+            //else
+            //{
+            //    Logger.Error("Read ApiUrl Error. Plaease check conifg in DB or appsetting.");
+            //}
         }
     }
 }

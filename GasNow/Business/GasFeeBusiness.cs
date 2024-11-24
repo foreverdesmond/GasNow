@@ -1,11 +1,13 @@
-﻿using System;
-using GasNow.Module;
+﻿using GasNow.Module;
 using GasNow.Dto;
 using GasNow.Service;
+using GasNow.Helper;
+using GasNow.ExternalApis;
 using System.Text.Json;
 using AutoMapper;
 using NLog;
 using StackExchange.Redis;
+using Microsoft.Extensions.Configuration;
 
 namespace GasNow.Business
 {
@@ -16,57 +18,26 @@ namespace GasNow.Business
         private GasNowDbContext _context;
         private IMapper _mapper;
         private IDatabase _redisDatabase;
+        private IConfiguration _configuration;
         private static GasFeeDto _currentGasFeeDto;
         private static readonly object _lock = new object();
+        private GasCalculate _gasCalculate;
 
-        public GasFeeBusiness()
-        {
-            CurrentGasFeeDto = new GasFeeDto();
-        }
-
-        public GasFeeBusiness(GasNowDbContext context)
-        {
-            CurrentGasFeeDto = new GasFeeDto();
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<GasFee, GasFeeDto>().ReverseMap();
-            });
-
-            _mapper = config.CreateMapper();
-            _context = context;
-        }
-
-        public GasFeeBusiness(IConnectionMultiplexer redis)
-        {
-            CurrentGasFeeDto = new GasFeeDto();
-            _redisDatabase = redis.GetDatabase();
-        }
-
-        public GasFeeBusiness(GasNowDbContext context, IConnectionMultiplexer redis)
-        {
-            CurrentGasFeeDto = new GasFeeDto();
-            var config = new MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<GasFee, GasFeeDto>().ReverseMap();
-            });
-
-            _context = context;
-            _mapper = config.CreateMapper();
-            _redisDatabase = redis.GetDatabase();
-        }
-
+        /// <summary>
+        /// Gets or sets the current gas fee data.
+        /// </summary>
         public static GasFeeDto CurrentGasFeeDto
         {
             get
             {
-                lock (_lock) 
+                lock (_lock)
                 {
                     return _currentGasFeeDto;
                 }
             }
             set
             {
-                lock (_lock) 
+                lock (_lock)
                 {
                     _currentGasFeeDto = value;
                 }
@@ -74,62 +45,81 @@ namespace GasNow.Business
         }
 
         /// <summary>
-        /// Asynchronously fetches gas fees from the specified API and saves them to the database and Redis.
+        /// Initializes a new instance of the <see cref="GasFeeBusiness"/> class.
         /// </summary>
-        /// <param name="httpClient">The HttpClient used to make the API request.</param>
-        /// <param name="apiUrl">The URL of the API to fetch gas fees from.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        /// <exception cref="Exception">Thrown when an error occurs while fetching or processing the gas fee data.</exception>
-        public async Task GetAndSaveGasFeesAsync(HttpClient httpClient, string apiUrl)
+        public GasFeeBusiness()
         {
-            try
+            CurrentGasFeeDto = new GasFeeDto();
+            _gasCalculate = new GasCalculate();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GasFeeBusiness"/> class with Redis connection.
+        /// </summary>
+        /// <param name="redis">The Redis connection multiplexer.</param>
+        public GasFeeBusiness(IConnectionMultiplexer redis)
+        {
+            CurrentGasFeeDto = new GasFeeDto();
+            _redisDatabase = redis.GetDatabase();
+            _gasCalculate = new GasCalculate();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GasFeeBusiness"/> class with Redis connection and configuration.
+        /// </summary>
+        /// <param name="redis">The Redis connection multiplexer.</param>
+        /// <param name="configuration">The application configuration.</param>
+        public GasFeeBusiness(IConnectionMultiplexer redis, IConfiguration configuration)
+        {
+            CurrentGasFeeDto = new GasFeeDto();
+            _redisDatabase = redis.GetDatabase();
+            _configuration = configuration;
+            _gasCalculate = new GasCalculate();
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="GasFeeBusiness"/> class with database context, Redis connection, and configuration.
+        /// </summary>
+        /// <param name="context">The database context.</param>
+        /// <param name="redis">The Redis connection multiplexer.</param>
+        /// <param name="configuration">The application configuration.</param>
+        public GasFeeBusiness(GasNowDbContext context, IConnectionMultiplexer redis, IConfiguration configuration)
+        {
+            CurrentGasFeeDto = new GasFeeDto();
+            var config = new MapperConfiguration(cfg =>
             {
-                var response = await httpClient.GetStringAsync(apiUrl);
+                cfg.CreateMap<GasFee, GasFeeDto>().ReverseMap();
+            });
 
-                var options = new JsonSerializerOptions
+            _context = context;
+            _mapper = config.CreateMapper();
+            _redisDatabase = redis.GetDatabase();
+            _configuration = configuration;
+            _gasCalculate = new GasCalculate();
+        }
+
+        /// <summary>
+        /// Asynchronously retrieves the current gas fee and saves it to Redis and optionally to the database.
+        /// </summary>
+        /// <param name="saveToDatabase">Indicates whether to save the gas fee data to the database.</param>
+        public async Task GetAndSaveGasFeesAsync(bool saveToDatabase)
+        {
+            var etherscanApiService = new EtherscanApiService(_configuration);
+
+            _currentGasFeeDto = await etherscanApiService.GetCurrentGasFeeAsync();
+
+            var _currentBlockNumber = _currentGasFeeDto.BlockNumber;
+            if (_currentBlockNumber > _lastBlockNumber)
+            {
+                _lastBlockNumber = _currentBlockNumber;
+                CurrentGasFeeDto = _currentGasFeeDto;
+
+                await _redisDatabase.StringSetAsync("CurrentGasFee", JsonSerializer.Serialize(CurrentGasFeeDto));
+
+                if (saveToDatabase)
                 {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var gasData = JsonSerializer.Deserialize<GasApiResponse>(response, options);
-
-                if (gasData != null && gasData.Result != null)
-                {
-                    var _currentBlockNumber = gasData.Result.LastBlock;
-                    if (_currentBlockNumber > _lastBlockNumber)
-                    {
-                        _lastBlockNumber = _currentBlockNumber;
-
-                        var congestionPercentage = GetCongestionPercentage(gasData.Result.GasUsedRatio);
-                        var rapidGasPrice = CalculateRapidMaxFee(gasData.Result.FastGasPrice, congestionPercentage);
-
-                        var gasFeeDto = new GasFeeDto
-                        {
-                            NetworkID = 1,
-                            BlockNumber = _lastBlockNumber,
-                            //BlockTimestamp = gasData.Result.BlockTimestamp,
-                            SlowMaxFee = gasData.Result.SafeGasPrice,
-                            SlowPriorityFee = gasData.Result.SafeGasPrice - gasData.Result.SuggestBaseFee,
-                            NormalMaxFee = gasData.Result.ProposeGasPrice,
-                            NormalPriorityFee = gasData.Result.ProposeGasPrice - gasData.Result.SuggestBaseFee,
-                            FastMaxFee = gasData.Result.FastGasPrice,
-                            FastPriorityFee = gasData.Result.FastGasPrice - gasData.Result.SuggestBaseFee,
-                            RapidMaxFee = rapidGasPrice,
-                            RapidPriorityFee = rapidGasPrice - gasData.Result.SuggestBaseFee,
-                        };
-
-                        CurrentGasFeeDto = gasFeeDto;
-
-                        await SaveGasFeeToDatabase(gasFeeDto);
-
-                        await _redisDatabase.StringSetAsync("CurrentGasFee", JsonSerializer.Serialize(gasFeeDto));
-                    }
+                    SaveGasFeeToDatabase(CurrentGasFeeDto);
                 }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "An error occurred while fetching current price.");
-                throw ex;
             }
         }
 
@@ -137,8 +127,7 @@ namespace GasNow.Business
         /// Saves the provided gas fee data to the database.
         /// </summary>
         /// <param name="gasFeeDto">The gas fee data to save.</param>
-        /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task SaveGasFeeToDatabase(GasFeeDto gasFeeDto)
+        private void SaveGasFeeToDatabase(GasFeeDto gasFeeDto)
         {
             var gasFeeService = new GasFeeService(_context, _mapper);
             gasFeeService.AddGasFee(gasFeeDto);
@@ -172,51 +161,88 @@ namespace GasNow.Business
         /// <returns>A <see cref="DateTimeOffset"/> representing the converted timestamp.</returns>
         public DateTimeOffset ConvertUnixTimeStamp(long timestamp)
         {
-            return DateTimeOffset.FromUnixTimeSeconds(timestamp);
+            return DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime;
         }
 
         /// <summary>
-        /// Calculates the congestion percentage based on the provided gas used ratio.
+        /// Asynchronously retrieves the average gas fee for the last week.
         /// </summary>
-        /// <param name="gasUsedRatio">A comma-separated string representing the gas used ratio.</param>
-        /// <returns>An integer representing the congestion percentage.</returns>
-        /// <exception cref="ArgumentException">Thrown when the gas used ratio contains invalid numbers.</exception>
-        public int GetCongestionPercentage(string gasUsedRatio)
+        /// <returns>A task that represents the asynchronous operation, containing a list of average gas fees for each day of the last week.</returns>
+        public async Task<List<decimal>> GetGasFeeLastWeek()
         {
-            var roundedRatios = gasUsedRatio
-                .Split(',')
-                .Select(s =>
-                {
-                    if (decimal.TryParse(s, out var number)) 
-                    {
-                        return Math.Round(number, 2);
-                    }
-                    throw new ArgumentException($"Invalid number in gasUsedRatio: {s}");
-                })
-                .ToArray();
+            var blockNumbersLastWeek = await GetBlockNumbersLastWeek();
 
-            var average = roundedRatios.Average();
+            var baseFeeInAWeek = new List<decimal>();
 
-            return (int)(average * 100);
-        }
+            var infuraApiService = new InfuraApiService(_configuration);
 
-        /// <summary>
-        /// Calculates the rapid maximum fee based on the fast maximum fee and congestion level.
-        /// </summary>
-        /// <param name="fastMaxFee">The fast maximum fee.</param>
-        /// <param name="congestion">The congestion level as a percentage.</param>
-        /// <returns>The calculated rapid maximum fee.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">Thrown when the congestion level is not between 1 and 100.</exception>
-        public static decimal CalculateRapidMaxFee(decimal fastMaxFee, int congestion)
-        {
-            if (congestion < 1 || congestion > 100)
+            for (int day = 0; day < 7; day++)
             {
-                throw new ArgumentOutOfRangeException(nameof(congestion), "Congestion level must be between 1 and 100.");
+                List<decimal> baseFeeInADay = new List<decimal>();
+
+                for (int hour = 0; hour < 24; hour++)
+                {
+                    try
+                    {
+                        long blockNumber = blockNumbersLastWeek[day, hour];
+
+                        var baseFeeList = await infuraApiService.GetBaseFeeHistory(blockNumber);
+
+                        baseFeeInADay.AddRange(baseFeeList);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error($"Failed to get baseFeeHistory for day {day} hour {hour}: {ex}");
+                    }
+                }
+
+                decimal baseFeeDayAll = 0;
+
+                foreach (decimal baseFee in baseFeeInADay)
+                {
+                    baseFeeDayAll += baseFee;
+                }
+
+                var baseFeeDayAve = baseFeeDayAll / (baseFeeInADay.Count > 0 ? baseFeeInADay.Count : 1);
+
+                baseFeeInAWeek.Add(baseFeeDayAve);
             }
 
-            decimal rapidMaxFee = fastMaxFee * (1.1M + (congestion - 1) * 0.009M);
+            return baseFeeInAWeek;
+        }
 
-            return rapidMaxFee;
+        /// <summary>
+        /// Asynchronously retrieves the block numbers for the last week.
+        /// </summary>
+        /// <returns>A task that represents the asynchronous operation, containing a 2D array of block numbers for the last week.</returns>
+        public async Task<long[,]> GetBlockNumbersLastWeek()
+        {
+            var etherscanApiService = new EtherscanApiService(_configuration);
+            var currentGasFeeDto = await etherscanApiService.GetCurrentGasFeeAsync();
+            var currentBlockNumber = currentGasFeeDto.BlockNumber;
+
+            const int blocksPerHour = 300;
+            var blockNumbersLastWeek = new long[7, 24];
+
+            var now = DateTime.UtcNow;
+
+            var startOfToday = new DateTime(now.Year, now.Month, now.Day, 0, 0, 0, DateTimeKind.Utc);
+
+            var totalSeconds = (now - startOfToday).TotalSeconds;
+
+            long blockNumberTodayBegin = currentBlockNumber - (long)(totalSeconds / 12);
+
+            for (int dayOffset = 0; dayOffset < 7; dayOffset++)
+            {
+                var targetDate = startOfToday.AddDays(-dayOffset);
+
+                for (int hour = 0; hour < 24; hour++)
+                {
+                    blockNumbersLastWeek[dayOffset, hour] = blockNumberTodayBegin - (dayOffset * 24 * blocksPerHour) - (hour * blocksPerHour);
+                }
+            }
+
+            return blockNumbersLastWeek;
         }
     }
 }

@@ -2,5 +2,13 @@
   "ConnectionStrings": {
     "DefaultConnection": "YourConnectionStringHere",
     "RedisConnection": "YourRedisConnectionStringHere"
+  },
+  "ApiUrls": {
+    "Alchemy": "https://api.g.alchemy.com/prices/v1/docs-demo/tokens/historical",
+    "GasNow": "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=",
+    "PriceNow": "https://api.etherscan.io/api?module=stats&action=ethprice&apikey="
+  },
+  "DatabaseSettings": {
+    "UseDatabase": false
   }
 }

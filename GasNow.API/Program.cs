@@ -2,7 +2,9 @@
 using GasNow.Module;
 using Microsoft.EntityFrameworkCore;
 using StackExchange.Redis;
+using DotNetEnv;
 
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,7 @@ builder.Services.AddDbContext<GasNowDbContext>(options =>
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(ConnectionMultiplexer.Connect(redisConnectionString));
 
-builder.Services.AddSingleton<IBusinessFactory, BusinessFactory>(); 
+builder.Services.AddSingleton<IBusinessFactory, BusinessFactory>();
 
 builder.Services.AddScoped<GasFeeBusiness>();
 builder.Services.AddScoped<PriceBussiness>();

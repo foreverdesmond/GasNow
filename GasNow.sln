@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GasNowTest", "GasNowTest\Ga
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GasNowConsole", "GasNowConsole\GasNowConsole.csproj", "{471C84D7-2B57-43BF-A297-47B902FE56CC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GasNow.API", "GasNow.API\GasNow.API.csproj", "{B5B6C614-BBB0-402C-A995-226B498C76A2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GasNowAPI", "GasNow.API\GasNowAPI.csproj", "{B5B6C614-BBB0-402C-A995-226B498C76A2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8C5C5F09-6FCD-444B-A7DB-6A4AE9271178}"
 	ProjectSection(SolutionItems) = preProject

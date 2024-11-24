@@ -12,6 +12,7 @@
     <None Remove="Business\" />
     <None Remove="Helper\" />
     <None Remove="Factory\" />
+    <None Remove="ExternalApis\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Module\" />
@@ -19,6 +20,7 @@
     <Folder Include="Business\" />
     <Folder Include="Helper\" />
     <Folder Include="Factory\" />
+    <Folder Include="ExternalApis\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="13.0.1" />
@@ -27,6 +29,7 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
     <PackageReference Include="NLog" Version="5.3.4" />
     <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+    <PackageReference Include="DotNetEnv" Version="3.1.1" />
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="Service\GasDatabaseService.cs" />
@@ -41,6 +44,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update=".env">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

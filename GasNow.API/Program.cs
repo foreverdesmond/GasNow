@@ -25,12 +25,25 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+//builder.Services.AddCors(options =>
+//{
+//    options.AddPolicy("AllowSpecificOrigin", builder =>
+//    builder.WithOrigins("http://localhost:3000") 
+//    .AllowAnyMethod()
+//    .AllowAnyHeader());
+//});
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", builder =>
-    builder.WithOrigins("http://localhost:3000") 
-.AllowAnyMethod()
-    .AllowAnyHeader());
+    builder.WithOrigins(
+        "http://203.211.107.7",
+        "http://localhost:3000",
+        "http://localhost",
+        "http://127.0.0.1")
+    .AllowAnyHeader()
+    .AllowAnyMethod());
 });
 
 var app = builder.Build();
@@ -43,11 +56,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowSpecificOrigin");
+
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseCors("AllowSpecificOrigin");
 
 app.Run();
 

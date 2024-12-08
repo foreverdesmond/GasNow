@@ -24,14 +24,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\GasNow\GasNow.csproj" />
-    <ProjectReference Include="..\GasNow.API\GasNow.API.csproj" />
+    <ProjectReference Include="..\GasNow.API\GasNowAPI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Remove="ServiceTest\" />
     <None Remove="ControllerTest\" />
+    <None Remove="ExternalApisTest\" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ServiceTest\" />
     <Folder Include="ControllerTest\" />
+    <Folder Include="ExternalApisTest\" />
   </ItemGroup>
 </Project>

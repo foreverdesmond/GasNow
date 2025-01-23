@@ -1,0 +1,7 @@
+﻿@GasNow.API_HostAddress = http://localhost:5171
+
+GET {{GasNow.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+

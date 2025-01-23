@@ -1,0 +1,18 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "YourConnectionStringHere",
+    "RedisConnection": "YourRedisConnectionStringHere"
+  },
+  "ApiUrls": {
+    "EtherscanApi": "https://api.etherscan.io/api",
+    "LineascanApi": "https://api.lineascan.build/api",
+    "InfuraApi": "https://mainnet.infura.io/v3/",
+    "AlchemyApi": "https://api.g.alchemy.com/prices/v1/docs-demo/tokens/",
+    "GasNow": "https://api.etherscan.io/api?module=gastracker&action=gasoracle&apikey=",
+    "PriceNow": "https://api.etherscan.io/api?module=stats&action=ethprice&apikey=",
+    "BlockNavieApi": "https://api.blocknative.com/gasprices/blockprices?chainid="
+  },
+  "DatabaseSettings": {
+    "UseDatabase": false
+  }
+}

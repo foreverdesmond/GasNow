@@ -33,10 +33,10 @@ RUN adduser --disabled-password --home /app --gecos '' appuser && chown -R appus
 USER appuser
 
 # 暴露端口
-EXPOSE 5000
+EXPOSE 6000
 
 # 设置环境变量
-ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_URLS=http://+:6000
 
 # 启动应用
 ENTRYPOINT ["dotnet", "GasNowAPI.dll"]

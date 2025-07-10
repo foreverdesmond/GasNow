@@ -2,13 +2,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# 复制解决方案文件（从上级目录构建）
-COPY *.sln ./
+# 首先复制项目文件进行 restore（提高缓存效率）
 COPY GasNow.API/*.csproj ./GasNow.API/
 COPY GasNow/*.csproj ./GasNow/
 
-# 还原NuGet包
-RUN dotnet restore
+# 还原 NuGet 包
+RUN dotnet restore "./GasNow.API/GasNowAPI.csproj"
 
 # 复制所有源代码
 COPY GasNow.API/ ./GasNow.API/

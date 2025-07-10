@@ -1,0 +1,53 @@
+# .NET 构建输出
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# Visual Studio 和开发工具
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+
+# NuGet 包
+**/packages/
+
+# 日志文件
+*.log
+**/logs/
+
+# 环境配置文件（根据需要调整）
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Git 文件
+.git/
+.gitignore
+.gitattributes
+
+# Docker 相关文件
+**/Dockerfile*
+**/docker-compose*
+**/.dockerignore
+
+# 测试输出
+**/TestResults/
+**/coverage/
+
+# 临时文件
+**/.DS_Store
+**/Thumbs.db
+**/*.tmp
+**/*.temp
+**/*~
+
+# 文档文件
+README.md
+**/*.md 
+

@@ -38,7 +38,9 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", builder =>
     builder.WithOrigins(
-        "http://203.211.107.7",
+        "http://104.194.88.159:7000",  // 前端容器的访问地址
+        "http://104.194.88.159",
+        "http://localhost:7000",      // 本地前端开发
         "http://localhost:3000",
         "http://localhost",
         "http://127.0.0.1")

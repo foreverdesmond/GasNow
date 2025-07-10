@@ -41,6 +41,8 @@ builder.Services.AddCors(options =>
         "http://104.194.88.159:3000",  // 前端容器的访问地址
         "http://104.194.88.159",     // 本地前端开发
         "http://localhost:3000",
+        "http://gasnow.link:3000",
+        "http://gasnow.link",
         "http://localhost",
         "http://127.0.0.1")
     .AllowAnyHeader()

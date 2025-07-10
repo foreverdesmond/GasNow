@@ -22,7 +22,7 @@ FROM build AS publish
 RUN dotnet publish "GasNowConsole.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # 运行时阶段
-FROM mcr.microsoft.com/dotnet/runtime:8.0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
 # 复制发布的文件

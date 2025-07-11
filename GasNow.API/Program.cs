@@ -38,6 +38,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigin", builder =>
     builder.WithOrigins(
+        "https://gasnow.link",        // HTTPS版本的前端域名
         "http://104.194.88.159:3000",  // 前端容器的访问地址
         "http://104.194.88.159",     // 本地前端开发
         "http://localhost:3000",

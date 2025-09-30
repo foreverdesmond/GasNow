@@ -105,7 +105,7 @@ namespace GasNow.ExternalApis
 		/// <exception cref="Exception">Thrown when an error occurs while fetching or processing the price data.</exception>
 		public async Task<PriceDto> GetCurrentPriceAsync()
 		{
-			var apiUrl = _apiUrl + "?module=stats&action=ethprice&apikey=" + _apiKey;
+			var apiUrl = _apiUrl + "&module=stats&action=ethprice&apikey=" + _apiKey;
 			string response = string.Empty;
 
 			try

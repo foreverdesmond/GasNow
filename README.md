@@ -1,24 +1,28 @@
-# GasNow
+<p align="center">
+  <b>🇬🇧 English</b> | <a href="README.zh-CN.md"><b>🇨🇳 中文</b></a>
+</p>
 
-Real-time Ethereum and Layer 2 gas price monitoring API.
+# ⛽ GasNow
 
-GasNow is a .NET 8 backend service that aggregates real-time gas fee data for
-Ethereum and multiple Layer 2 networks. It powers [gasnow.link](https://gasnow.link/),
-which is built with the companion frontend repo
+**Real-time Ethereum & L2 Gas Price API**
+
+GasNow is a **.NET 8** backend service that aggregates real-time gas fee data
+for **Ethereum and multiple Layer 2 networks**. It powers
+[gasnow.link](https://gasnow.link/), built with the companion frontend
 [`gas-now-web-app`](https://github.com/foreverdesmond/gas-now-web-app).
 
-## Features
+## ✨ Features
 
-- **Real-time gas tracking** for Ethereum and L2 networks (Arbitrum, Optimism, Base, Linea, zkSync)
+- **Real-time gas tracking** for ETH, Arbitrum, Optimism, Base, Linea, zkSync
 - **Multi-source aggregation**: Etherscan, Lineascan, Alchemy, Infura, Blocknative
 - **Multi-chain support** via Blocknative chainid-based queries
 - **Swagger API docs** (Swashbuckle)
-- **Background worker** (`GasNowConsole`) for scheduled data collection
-- **Optional persistence**: EF Core (SQL) + Redis caching (toggle via config)
-- **Docker support** for API and console worker
+- **Background worker** (`GasNowConsole`) for scheduled collection
+- **Optional persistence**: EF Core (SQL) + Redis caching (toggle in config)
+- **Docker support** for API and worker
 - **Structured logging** with NLog
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 GasNow.sln
@@ -28,14 +32,14 @@ GasNow.sln
 └── GasNowTest        # Unit tests (controllers, external APIs, services)
 ```
 
-## Prerequisites
+## 📋 Prerequisites
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- API keys for the data sources you want to use (see below)
+- API keys for the data sources you use (see below)
 
-## Configuration
+## ⚙️ Configuration
 
-Copy the example environment file and fill in your API keys:
+Copy the example env file and fill in your API keys:
 
 ```bash
 cp GasNow.API/.env.example GasNow.API/.env
@@ -49,10 +53,10 @@ cp GasNow.API/.env.example GasNow.API/.env
 | `LINEASCAN_API_KEY` | No | https://lineascan.build |
 | `BLOCKNAVIE_API_KEY` | No | https://www.blocknative.com |
 
-Application settings (connection strings, API URLs, database toggle) live in
-`GasNow/appsetting.example.json` — copy it to `appsetting.json` and adjust.
+Application settings live in `GasNow/appsetting.example.json` — copy it to
+`appsetting.json` and adjust.
 
-## Running
+## 🚀 Running
 
 ```bash
 # API server
@@ -62,26 +66,25 @@ cd GasNow.API && dotnet run
 cd GasNowConsole && dotnet run
 ```
 
-Or with Docker (see `GasNow.API/docker/` and `GasNowConsole/docker/` for
-Dockerfiles).
+Or with Docker (see `GasNow.API/docker/` and `GasNowConsole/docker/`).
 
-## API Endpoints
+## 🔌 API Endpoints
 
 - `GET /api/gasfee` — current gas prices
 - `GET /api/price` — ETH price
 - `GET /api/blocknavie` — Blocknative gas prices by chain
 
-## Tests
+## 🧪 Tests
 
 ```bash
 dotnet test GasNowTest
 ```
 
-## License
+## 📄 License
 
 [MIT](LICENSE)
 
-## Related
+## 🔗 Related
 
 - Frontend: [gas-now-web-app](https://github.com/foreverdesmond/gas-now-web-app)
 - Live site: [gasnow.link](https://gasnow.link/)

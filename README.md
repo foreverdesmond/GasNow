@@ -1,18 +1,23 @@
 # ⛽ GasNow
 
-**Real-time Ethereum & L2 Gas Price API | ETH 与 L2 实时 Gas 价格 API**
-
-<p align="center">
-  <a href="#简体中文">简体中文</a> · <a href="#english">English</a>
-</p>
-
 <div align="center">
+
+  **Real-time Ethereum & L2 Gas Price API | ETH 与 L2 实时 Gas 价格 API**
+
+  .NET backend that aggregates real-time gas fee data for Ethereum and multiple Layer 2 networks
+
+  基于 .NET 8 的后端服务，聚合以太坊主网及多条 Layer 2 网络的实时 Gas 费用数据
+
   🌐 **Live Site | 在线站点**: [https://gasnow.link](https://gasnow.link)
-  <br/>
+
   [![X (Twitter)](https://img.shields.io/badge/X-@Richyisaflower-black?logo=x)](https://x.com/Richyisaflower)
   [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://choosealicense.com/licenses/mit/)
   [![.NET](https://img.shields.io/badge/.NET-8.0-blueviolet)](https://dotnet.microsoft.com/)
 </div>
+
+<p align="center">
+  <a href="#简体中文">简体中文</a> · <a href="#english">English</a>
+</p>
 
 ---
 
